@@ -69,7 +69,7 @@ if pregunta := st.chat_input("Escribe tu consulta sobre el protocolo..."):
     # Respuesta de Gemini
     with st.chat_message("assistant"):
         with st.spinner("Consultando protocolos..."):
-            model = genai.GenerativeModel('gemini-1.5-pro')
+            model = genai.GenerativeModel('gemini-pro')
             
             # Le damos instrucciones estrictas a Gemini
             prompt = f"""
