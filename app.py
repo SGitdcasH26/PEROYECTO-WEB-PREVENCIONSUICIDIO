@@ -1,49 +1,89 @@
 import streamlit as st
+import google.generativeai as genai
+import PyPDF2
+import os
 
-# --- 1. CONFIGURACIÓN DE LA PÁGINA ---
-st.set_page_config(page_title="Protocolo Prehospitalario - 061", page_icon="🚑", layout="centered")
+# --- 1. CONFIGURACIÓN Y SEGURIDAD ---
+st.set_page_config(page_title="Asistente de Protocolos 061", page_icon="🚑")
 
-# --- 2. SISTEMA DE SEGURIDAD (CONTRASEÑA) ---
-# PUEDES CAMBIAR "061seguro" POR LA CLAVE QUE TÚ QUIERAS
-CONTRASEÑA_CORRECTA = "061seguro"
+# Recuperamos la contraseña y la API Key de los Secrets de Streamlit
+CONTRASEÑA_CORRECTA = "061seguro" 
+if "GEMINI_API_KEY" not in st.secrets:
+    st.error("Falta la API Key de Gemini en los Secrets de Streamlit.")
+    st.stop()
 
-# Comprobamos si el usuario ya ha puesto la clave correcta
+genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+
+# --- 2. SISTEMA DE LOGIN ---
 if "acceso_concedido" not in st.session_state:
     st.session_state.acceso_concedido = False
 
-# Si no tiene acceso, mostramos la pantalla de bloqueo
 if not st.session_state.acceso_concedido:
-    st.markdown("<h2 style='text-align: center; color: #2C3E50;'>🔒 Acceso Restringido</h2>", unsafe_allow_html=True)
-    st.warning("Esta es un área de desarrollo e investigación clínica. Por favor, introduce la clave de acceso.")
-    
-    clave_introducida = st.text_input("Contraseña:", type="password")
-    
+    st.title("🔒 Acceso Restringido")
+    clave = st.text_input("Introduce la contraseña para acceder a los protocolos:", type="password")
     if st.button("Entrar"):
-        if clave_introducida == CONTRASEÑA_CORRECTA:
+        if clave == CONTRASEÑA_CORRECTA:
             st.session_state.acceso_concedido = True
-            st.rerun() 
+            st.rerun()
         else:
-            st.error("❌ Contraseña incorrecta. Inténtalo de nuevo.")
-    
+            st.error("Contraseña incorrecta")
     st.stop()
 
-# =====================================================================
-# 🚑 ÁREA PROTEGIDA: TODO LO DE ABAJO SOLO SE VE CON CONTRASEÑA
-# =====================================================================
+# --- 3. LECTURA DE DOCUMENTOS PDF ---
+@st.cache_resource # Esto hace que solo lea los PDFs una vez para que sea rápido
+def extraer_texto_pdfs():
+    texto_total = ""
+    # Buscamos archivos PDF en la carpeta del proyecto
+    archivos_pdf = [f for f in os.listdir('.') if f.endswith('.pdf')]
+    
+    for archivo in archivos_pdf:
+        try:
+            with open(archivo, "rb") as f:
+                lector = PyPDF2.PdfReader(f)
+                for pagina in lector.pages:
+                    texto_total += pagina.extract_text() + "\n"
+        except Exception as e:
+            st.warning(f"No se pudo leer el archivo {archivo}: {e}")
+    return texto_total
 
-# --- 3. INTERFAZ PRINCIPAL DEL PROTOCOLO ---
-st.title("🚑 Protocolo Prehospitalario: Conducta Suicida")
-st.markdown("### Guía Rápida de Atención y Evidencia Clínica")
+contexto_protocolos = extraer_texto_pdfs()
 
-st.success("¡Acceso concedido! Bienvenida a tu espacio de investigación, Susana.")
+# --- 4. INTERFAZ DE CHAT ---
+st.title("🚑 Asistente Virtual: Protocolos 061")
+st.markdown(f"He analizado los documentos subidos. ¿En qué puedo ayudarte hoy, Susana?")
 
-st.markdown("""
----
-#### 🛠️ Estructura del Proyecto:
-Esta plataforma integrará tres pilares fundamentales:
-1. **Guía Rápida de Protocolos:** Respuestas directas basadas en tus documentos de evidencia.
-2. **Observatorio Estadístico:** Análisis de peticiones de asistencia en Andalucía.
-3. **Gestión de la Evidencia:** Repositorio de documentos técnicos de interés.
-""")
+if "mensajes" not in st.session_state:
+    st.session_state.mensajes = []
 
-st.info("💡 **Próximo paso:** Una vez verifiques que la contraseña funciona, empezaremos a integrar tus documentos.")
+# Mostrar historial de chat
+for mensaje in st.session_state.mensajes:
+    with st.chat_message(mensaje["role"]):
+        st.markdown(mensaje["content"])
+
+# Entrada del usuario
+if pregunta := st.chat_input("Escribe tu consulta sobre el protocolo..."):
+    st.session_state.mensajes.append({"role": "user", "content": pregunta})
+    with st.chat_message("user"):
+        st.markdown(pregunta)
+
+    # Respuesta de Gemini
+    with st.chat_message("assistant"):
+        with st.spinner("Consultando protocolos..."):
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            
+            # Le damos instrucciones estrictas a Gemini
+            prompt = f"""
+            Eres un asistente experto en protocolos médicos de emergencias (061).
+            Utiliza exclusivamente el siguiente texto extraído de los manuales para responder la duda del usuario.
+            Si la respuesta no está en el texto, indícalo educadamente.
+            
+            TEXTO DE PROTOCOLOS:
+            {contexto_protocolos}
+            
+            PREGUNTA:
+            {pregunta}
+            """
+            
+            respuesta = model.generate_content(prompt)
+            st.markdown(respuesta.text)
+            st.session_state.mensajes.append({"role": "assistant", "content": respuesta.text})
