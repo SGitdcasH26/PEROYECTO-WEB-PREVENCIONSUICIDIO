@@ -48,16 +48,15 @@ contexto_protocolos = extraer_texto_pdfs()
 
 # --- 4. BARRA LATERAL (MENÚ IZQUIERDO) ---
 with st.sidebar:
-    # Busca la imagen de la portada y la muestra
+    # Mostramos la imagen con un ancho fijo de 150 píxeles para que no sea gigante
     if os.path.exists("portada.png"):
-        st.image("portada.png", use_container_width=True)
+        st.image("portada.png", width=150)
     elif os.path.exists("portada.jpg"):
-        st.image("portada.jpg", use_container_width=True)
+        st.image("portada.jpg", width=150)
         
     st.markdown("### 📚 Base de conocimiento")
-    st.markdown("Este asistente responde basándose **exclusivamente** en la información de estos documentos:")
+    st.markdown("Este asistente responde basándose **exclusivamente** en estos documentos:")
     
-    # Crea la lista automática de PDFs
     archivos_pdf = [f for f in os.listdir('.') if f.endswith('.pdf')]
     for pdf in archivos_pdf:
         st.markdown(f"- 📄 *{pdf}*")
