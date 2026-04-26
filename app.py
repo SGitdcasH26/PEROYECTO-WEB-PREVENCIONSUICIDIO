@@ -49,8 +49,17 @@ def extraer_texto_pdfs():
 contexto_protocolos = extraer_texto_pdfs()
 
 # --- 4. INTERFAZ DE CHAT ---
-st.title("🚑 Asistente Virtual: Protocolos 061")
-st.markdown("He analizado los documentos subidos. ¿En qué puedo ayudarte hoy, Susana?")
+# Título principal en negrita
+st.markdown("# **Atención a personas con conducta suicida y sus familias**")
+
+# Subtítulo en letra más pequeña
+st.markdown("##### Cómo contribuir a prevenir el suicidio desde la atención emergente prehospitalaria")
+
+# Texto pequeño con sombreado amarillo
+st.markdown('<p style="background-color: #FFFF00; color: black; display: inline; padding: 2px; font-size: 0.9em; font-weight: bold;">Haz tu consulta aquí</p>', unsafe_allow_html=True)
+
+# Añadimos un pequeño espacio para que no quede pegado al chat
+st.write("")
 
 if "mensajes" not in st.session_state:
     st.session_state.mensajes = []
