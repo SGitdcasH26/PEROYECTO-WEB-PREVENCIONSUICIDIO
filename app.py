@@ -46,20 +46,19 @@ def extraer_texto_pdfs():
 
 contexto_protocolos = extraer_texto_pdfs()
 
-# --- 4. BARRA LATERAL (MENÚ IZQUIERDO) ---
+# --- 4. BARRA LATERAL (LISTADO DE PROTOCOLOS) ---
 with st.sidebar:
-    # Mostramos la imagen con un ancho fijo de 150 píxeles para que no sea gigante
-    if os.path.exists("portada.png"):
-        st.image("portada.png", width=150)
-    elif os.path.exists("portada.jpg"):
-        st.image("portada.jpg", width=150)
-        
-    st.markdown("### 📚 Base de conocimiento")
-    st.markdown("Este asistente responde basándose **exclusivamente** en estos documentos:")
+    st.markdown("### 📚 Protocolos y Procedimientos")
+    st.markdown("Documentos cargados actualmente:")
     
+    # Buscamos todos los archivos PDF en el repositorio
     archivos_pdf = [f for f in os.listdir('.') if f.endswith('.pdf')]
-    for pdf in archivos_pdf:
-        st.markdown(f"- 📄 *{pdf}*")
+    
+    if archivos_pdf:
+        for pdf in archivos_pdf:
+            st.markdown(f"- 📄 **{pdf}**")
+    else:
+        st.write("No se han encontrado archivos PDF.")
 
 # --- 5. INTERFAZ DE CHAT ---
 st.markdown("# **Atención a personas con conducta suicida y sus familias**")
@@ -81,7 +80,7 @@ if pregunta := st.chat_input("Escribe tu consulta sobre el protocolo..."):
 
     with st.chat_message("assistant"):
         with st.spinner("Consultando manuales..."):
-            model = genai.GenerativeModel('gemini-2.5-flash')
+            model = genai.GenerativeModel('gemini-1.5-flash')
             prompt = f"""
             Eres un asistente experto en protocolos médicos de emergencias (061).
             Utiliza exclusivamente el siguiente texto extraído de los manuales para responder la duda del usuario.
