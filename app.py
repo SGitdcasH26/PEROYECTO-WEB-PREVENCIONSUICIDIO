@@ -80,7 +80,7 @@ if pregunta := st.chat_input("Escribe tu consulta sobre el protocolo..."):
 
     with st.chat_message("assistant"):
         with st.spinner("Consultando manuales..."):
-            model = genai.GenerativeModel('gemini-1.5-flash')
+            model = genai.GenerativeModel('gemini-2.5-flash')
             prompt = f"""
             Eres un asistente experto en protocolos médicos de emergencias (061).
             Utiliza exclusivamente el siguiente texto extraído de los manuales para responder la duda del usuario.
